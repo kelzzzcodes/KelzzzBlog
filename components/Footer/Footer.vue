@@ -4,7 +4,7 @@
 
 <template>
     <footer class="px-8 py-4 flex flex-col gap-8 text-stone-300">
-        <div class="grid grid-cols-3 gap-10">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
             <div class="flex flex-col gap-4">
                 <h3 class="text-2xl font-extrabold">About</h3>
                 <p>
@@ -23,7 +23,7 @@
 
 
             </div>
-            <div class="flex gap-16 items-center justify-center">
+            <div class="flex gap-16 items-center lg:justify-center">
                 <div class="flex flex-col gap-4">
                     <h3 class="text-2xl font-extrabold">Quick Link</h3>
                     <ul>
