@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, computed } from 'vue';
 import { useRoute } from 'vue-router';
 import axios from 'axios';
 import { useRuntimeConfig } from '#imports';
@@ -7,13 +7,14 @@ import { useRuntimeConfig } from '#imports';
 const config = useRuntimeConfig();
 const route = useRoute();
 const postId = route.params.id as string;
+const fromSearch = route.query.fromSearch === 'true';
 
 interface LatestPost {
     title: string;
     description: string;
     urlToImage: string;
     author: string;
-    id: string;
+    url: string;  // Changed to use a unique identifier
     publishedAt: string;
 }
 
@@ -22,13 +23,16 @@ const loading = ref(true);
 
 onMounted(async () => {
     try {
-        const response = await axios.get(`https://newsapi.org/v2/top-headlines?sources=bbc-news&apiKey=${config.public.apiKey}`);
-        const posts = response.data.articles.map((article: any, index: number) => ({
-            ...article,
-            id: index.toString(),  // Generate unique ID
-        }));
-        const fetchedPost = posts.find((post: LatestPost) => post.id === postId);
-        post.value = fetchedPost || null;
+        let response;
+        if (fromSearch) {
+            response = await axios.get(`https://newsapi.org/v2/everything?q=${encodeURIComponent(postId)}&apiKey=${config.public.apiKey}`);
+            const articles = response.data.articles;
+            post.value = articles.find((article: LatestPost) => article.url === postId) || null;
+        } else {
+            response = await axios.get(`https://newsapi.org/v2/top-headlines?sources=bbc-news&apiKey=${config.public.apiKey}`);
+            const posts = response.data.articles;
+            post.value = posts.find((article: LatestPost) => article.url === postId) || null;
+        }
     } catch (error) {
         console.error('Error fetching post details:', error);
     } finally {
@@ -39,7 +43,6 @@ onMounted(async () => {
 const year = computed(() => {
     return post.value ? post.value.publishedAt.substring(0, 4) : '';
 });
-
 </script>
 
 <template>
@@ -47,26 +50,19 @@ const year = computed(() => {
         <Skeleton class="h-[350px] w-[95%] mx-auto rounded-xl" />
     </div>
     <div v-else-if="post" class="flex items-center justify-center py-8 text-white">
-        <div class="flex flex-col gap-10  ">
+        <div class="flex flex-col gap-10">
             <div class="flex flex-col gap-2">
                 <h1 class="w-[75%]">{{ post.title }}</h1>
                 <ul class="flex gap-2">
-
-                    <li>
-                        {{ post.author }}
-                    </li>
-                    <li>
-                        {{ year }}
-                    </li>
+                    <li>{{ post.author }}</li>
+                    <li>{{ year }}</li>
                 </ul>
             </div>
-            <img :src="post.urlToImage" alt="Post Image"  class="rounded-xl"/>
+            <img :src="post.urlToImage" alt="Post Image" class="rounded-xl" />
             <p>{{ post.description }}</p>
-
         </div>
     </div>
-
-    <div v-else>
-        <p>Post not found.</p>
+    <div v-else class="h-screen text-center text-white ">
+        <p class="">Post not found.</p>
     </div>
 </template>
